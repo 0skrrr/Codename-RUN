@@ -4,6 +4,8 @@ import type {
   LayerSpecification,
   Map as MapLibreMap,
 } from "maplibre-gl";
+import { BASE_MAP_PALETTES } from "../basemapPalettes.ts";
+import { themePaint } from "../mapStyle.ts";
 import { featureCollection, type LabFeatureCollection } from "./geo.ts";
 import type { Settings } from "./settings.ts";
 
@@ -35,7 +37,6 @@ const LAYER = {
 
 const BUILDINGS_SOURCE = "osm-buildings";
 const BUILDINGS_MIN_ZOOM = 13;
-const BUILDING_COLOR = "#d9d0c9";
 const PACKET_STROKE_COLOR = "#ffffff";
 const RUN_CELL_OPACITY_FACTOR = 0.5;
 const TRADE_CELL_OPACITY = 0.55;
@@ -71,12 +72,17 @@ export function applyLabSettings(map: MapLibreMap, settings: Settings, baseLayer
 }
 
 function applyBaseMap(map: MapLibreMap, settings: Settings, baseLayerIds: readonly string[], extruded: boolean): void {
+  const theme = settings["baseMap.theme"];
+  for (const { layerId, property, value } of themePaint(theme)) {
+    if (map.getLayer(layerId)) map.setPaintProperty(layerId, property, value);
+  }
   for (const id of baseLayerIds) {
     const property = BASE_OPACITY_PROPERTIES[map.getLayer(id)?.type ?? ""];
     if (property) map.setPaintProperty(id, property, settings["baseMap.opacity"]);
   }
   if (!map.getLayer(LAYER.buildingExtrusion)) return;
   setVisible(map, LAYER.buildingExtrusion, extruded && settings["baseMap.extrudeBuildings"]);
+  map.setPaintProperty(LAYER.buildingExtrusion, "fill-extrusion-color", BASE_MAP_PALETTES[theme].building);
   map.setPaintProperty(LAYER.buildingExtrusion, "fill-extrusion-height", settings["baseMap.buildingHeight"]);
   map.setPaintProperty(LAYER.buildingExtrusion, "fill-extrusion-opacity", settings["baseMap.opacity"]);
 }
@@ -200,7 +206,7 @@ function labLayerSpecifications(hasBuildings: boolean): LayerSpecification[] {
       type: "fill-extrusion",
       source: BUILDINGS_SOURCE,
       minzoom: BUILDINGS_MIN_ZOOM,
-      paint: { "fill-extrusion-color": BUILDING_COLOR, "fill-extrusion-base": 0 },
+      paint: { "fill-extrusion-base": 0 },
     },
     ...layers,
   ];

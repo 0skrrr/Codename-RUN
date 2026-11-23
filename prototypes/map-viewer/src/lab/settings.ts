@@ -1,3 +1,5 @@
+import { BASE_MAP_THEMES } from "../basemapPalettes.ts";
+
 export const VIEW_MODES = ["flat", "extruded"] as const;
 export const TERRITORY_STYLES = ["fill", "outline", "fillOutline"] as const;
 export const TERRITORY_BORDERS = ["perHex", "merged"] as const;
@@ -10,6 +12,7 @@ export const TRADE_COLOR_MODES = ["fixed", "bandwidth"] as const;
 export interface Settings {
   "view.mode": (typeof VIEW_MODES)[number];
   "view.pitch": number;
+  "baseMap.theme": (typeof BASE_MAP_THEMES)[number];
   "baseMap.opacity": number;
   "baseMap.extrudeBuildings": boolean;
   "baseMap.buildingHeight": number;
@@ -79,6 +82,7 @@ export const ZLIN_CITY_CENTER = { longitude: 17.6667, latitude: 49.2265 } as con
 export const DEFAULT_SETTINGS: Readonly<Settings> = {
   "view.mode": "flat",
   "view.pitch": 0,
+  "baseMap.theme": "standard",
   "baseMap.opacity": 1,
   "baseMap.extrudeBuildings": false,
   "baseMap.buildingHeight": 12,
@@ -141,6 +145,7 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
   {
     id: "baseMap",
     controls: [
+      { key: "baseMap.theme", kind: "choice", options: BASE_MAP_THEMES },
       { key: "baseMap.opacity", kind: "range", min: 0, max: 1, step: 0.05 },
       { key: "baseMap.extrudeBuildings", kind: "toggle" },
       { key: "baseMap.buildingHeight", kind: "range", min: 2, max: 60, step: 1, unit: "m" },

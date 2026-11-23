@@ -62,13 +62,20 @@ The viewer's **Hex lab** panel is for deciding how the game should look. Every v
 | Group | What you can try |
 |---|---|
 | View | Flat top-down or 2.5D raised hexes, camera tilt |
-| Base map | Fade the map, 3D buildings |
+| Base map | Map colours (standard OSM, soft *paper*, dark *night*), fade the map, 3D buildings |
 | Hex grid | On/off, hex size (H3 resolution 7–13, shown as edge length in metres), line colour, width, opacity |
 | Territories | Fill / border / both, border around every hex or around the whole area, opacity, border width, how far territory spreads around a run, height in 2.5D, different height per player |
 | Zoomed-out view | Simplify into bigger hexes when zoomed out, smallest hex size on screen, minimum dominance to colour a hex, fade contested areas, grid follows the simplified size |
 | Runs | Line / hexes it crossed / both, width, opacity, dashed |
 | Trade routes | Line / chain of hexes / both, width fixed or by bandwidth, colour fixed or low→high bandwidth gradient, height in 2.5D, moving resource packets with speed and size |
 | Demo scenario | Random seed, up to 200 players, runs per player, run length, number of trade routes, play area radius, % of the map filled by territories, "generate around current view" |
+
+### Ready-made looks
+Two presets in `prototypes/map-viewer/presets/` are a starting point; load them with *Load* in the Presets group.
+- **night-board:** dark map, 2.5D with low raised territories and 3D buildings, white trade routes. Player colours glow against the dark ground, and white flows can't be mistaken for any player.
+- **paper-board:** the same scenario flat on soft, light map colours with charcoal trade routes.
+
+Why custom map colours: the standard OSM palette is saturated (green forests, salmon paths, purple borders), so player colours fight it even when the map is faded. The *paper* and *night* palettes keep the same layers but move everything to near-neutral tones, leaving strong colour to the game.
 
 ### Crowded maps
 *Map filled by territories* grows every player's territory outward from their runs, one ring at a time and all players at the same pace, until that share of the *play area* (a circle around the scenario centre) is claimed. That gives neighbourhood-like areas and a full map without thousands of fake runs. For tiny hex sizes the growth runs on a coarser grid (at most 150,000 hexes) and is then split back down. Beyond the 8 hand-picked player colours, extra players get evenly spread hues.
