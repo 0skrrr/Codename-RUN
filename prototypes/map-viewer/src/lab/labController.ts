@@ -1,7 +1,17 @@
 import { getHexagonAreaAvg, getHexagonEdgeLengthAvg } from "h3-js";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { cumulativeDistances, featureCollection, pointAlongPath, type LabFeature, type LngLat } from "./geo.ts";
-import { gridFeatures, runFeatures, territoryFeatures, territoryOwnership, tradeRouteFeatures, type Bounds } from "./hexes.ts";
+import {
+  aggregateOwnership,
+  displayResolution,
+  fullyOwned,
+  gridFeatures,
+  runFeatures,
+  territoryFeatures,
+  territoryOwnership,
+  tradeRouteFeatures,
+  type Bounds,
+} from "./hexes.ts";
 import { addLabLayers, applyLabSettings, LAB_SOURCES, setLabData } from "./labLayers.ts";
 import { buildRoadGraph, type RoadGraph } from "./roadGraph.ts";
 import { generateScenario, type Scenario, type TradeRoute } from "./scenario.ts";
@@ -16,6 +26,8 @@ export interface LabInfo {
   hexAreaSquareMeters: number;
   gridHidden: boolean;
   roadsMissing: boolean;
+  simplifiedResolution: number | undefined;
+  simplifiedEdgeMeters: number;
 }
 
 export interface LabController {
@@ -56,6 +68,8 @@ export async function createLab(
   let graphCenterKey = "";
   let scenario: Scenario = { players: [], runs: [], tradeRoutes: [] };
   let territoryHexes = 0;
+  let baseOwners = new Map<string, number>();
+  let territoryResolution = -1;
   let gridHidden = false;
   let packetRoutes: PacketRoute[] = [];
 
@@ -77,11 +91,26 @@ export async function createLab(
     packetRoutes = scenario.tradeRoutes.map(toPacketRoute);
   };
 
+  const currentDisplayResolution = (): number => {
+    const base = settings["hexGrid.resolution"];
+    if (!settings["simplify.enabled"]) return base;
+    return displayResolution(base, map.getZoom(), map.getCenter().lat, settings["simplify.minHexPixels"]);
+  };
+
+  const rebuildTerritory = (): void => {
+    territoryResolution = currentDisplayResolution();
+    const owned =
+      territoryResolution < settings["hexGrid.resolution"]
+        ? aggregateOwnership(baseOwners, territoryResolution, settings["simplify.minShare"])
+        : fullyOwned(baseOwners);
+    setLabData(map, LAB_SOURCES.territory, territoryFeatures(owned, scenario.players));
+  };
+
   const rebuildHexData = (): void => {
     const resolution = settings["hexGrid.resolution"];
-    const owners = territoryOwnership(scenario.runs, resolution, settings["territory.growth"]);
-    territoryHexes = owners.size;
-    setLabData(map, LAB_SOURCES.territory, territoryFeatures(owners, scenario.players));
+    baseOwners = territoryOwnership(scenario.runs, resolution, settings["territory.growth"]);
+    territoryHexes = baseOwners.size;
+    rebuildTerritory();
     const runs = runFeatures(scenario.runs, scenario.players, resolution);
     setLabData(map, LAB_SOURCES.runLines, runs.lines);
     setLabData(map, LAB_SOURCES.runCells, runs.cells);
@@ -92,13 +121,16 @@ export async function createLab(
 
   const rebuildGrid = (): void => {
     const bounds = map.getBounds().toArray().flat() as Bounds;
-    const grid = gridFeatures(bounds, settings["hexGrid.resolution"], MAX_GRID_CELLS);
+    const followsSimplified = settings["simplify.enabled"] && settings["simplify.gridFollows"];
+    const resolution = followsSimplified ? currentDisplayResolution() : settings["hexGrid.resolution"];
+    const grid = gridFeatures(bounds, resolution, MAX_GRID_CELLS);
     gridHidden = grid === undefined;
     setLabData(map, LAB_SOURCES.grid, grid ?? featureCollection([]));
   };
 
   const reportInfo = (): void => {
     const resolution = settings["hexGrid.resolution"];
+    const simplified = territoryResolution < resolution ? territoryResolution : undefined;
     onInfo({
       players: scenario.players.length,
       runs: scenario.runs.length,
@@ -108,6 +140,8 @@ export async function createLab(
       hexAreaSquareMeters: getHexagonAreaAvg(resolution, "km2") * SQUARE_METERS_PER_SQUARE_KILOMETER,
       gridHidden: settings["hexGrid.enabled"] && gridHidden,
       roadsMissing: roadLines.length === 0,
+      simplifiedResolution: simplified,
+      simplifiedEdgeMeters: simplified === undefined ? 0 : getHexagonEdgeLengthAvg(simplified, "m"),
     });
   };
 
@@ -125,6 +159,7 @@ export async function createLab(
   applyLabSettings(map, settings, baseLayerIds);
   reportInfo();
   map.on("moveend", () => {
+    if (currentDisplayResolution() !== territoryResolution) rebuildTerritory();
     rebuildGrid();
     reportInfo();
   });
@@ -135,8 +170,10 @@ export async function createLab(
       settings = next;
       const scenarioChanged = changedKey === undefined || changedKey.startsWith("scenario.");
       if (scenarioChanged) rebuildScenario();
+      const simplifyChanged = changedKey?.startsWith("simplify.") ?? false;
       if (scenarioChanged || (changedKey !== undefined && HEX_DATA_KEYS.has(changedKey))) rebuildHexData();
-      if (changedKey === undefined || changedKey === "hexGrid.resolution") rebuildGrid();
+      else if (simplifyChanged) rebuildTerritory();
+      if (changedKey === undefined || changedKey === "hexGrid.resolution" || simplifyChanged) rebuildGrid();
       applyLabSettings(map, settings, baseLayerIds);
       reportInfo();
     },

@@ -104,5 +104,12 @@
   "lab.presets.invalidName": "Give the preset a name using letters, numbers or dashes.",
   "lab.presets.loadFailed": "Could not load that preset.",
   "lab.presets.saveFailed": "Could not save. Is pnpm map:dev running?",
-  "lab.presets.importFailed": "That file is not a settings file."
+  "lab.presets.importFailed": "That file is not a settings file.",
+  "lab.group.simplify": "Zoomed-out view",
+  "lab.control.simplify.enabled": "Simplify when zoomed out",
+  "lab.control.simplify.minHexPixels": "Smallest hex on screen",
+  "lab.control.simplify.minShare": "Minimum dominance to colour",
+  "lab.control.simplify.fadeByShare": "Fade contested areas",
+  "lab.control.simplify.gridFollows": "Grid uses simplified size",
+  "lab.info.simplified": "Simplified view: resolution {resolution} (edge ≈ {edge} m)"
 }

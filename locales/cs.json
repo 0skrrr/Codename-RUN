@@ -104,5 +104,12 @@
   "lab.presets.invalidName": "Pojmenuj nastavení pomocí písmen, čísel nebo pomlček.",
   "lab.presets.loadFailed": "Toto nastavení se nepodařilo načíst.",
   "lab.presets.saveFailed": "Uložení selhalo. Běží pnpm map:dev?",
-  "lab.presets.importFailed": "Tohle není soubor s nastavením."
+  "lab.presets.importFailed": "Tohle není soubor s nastavením.",
+  "lab.group.simplify": "Oddálený pohled",
+  "lab.control.simplify.enabled": "Zjednodušit při oddálení",
+  "lab.control.simplify.minHexPixels": "Nejmenší hex na obrazovce",
+  "lab.control.simplify.minShare": "Min. převaha pro obarvení",
+  "lab.control.simplify.fadeByShare": "Zesvětlit sporná území",
+  "lab.control.simplify.gridFollows": "Mřížka podle zjednodušení",
+  "lab.info.simplified": "Zjednodušený pohled: rozlišení {resolution} (hrana ≈ {edge} m)"
 }

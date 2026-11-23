@@ -97,7 +97,12 @@ function applyTerritory(map: MapLibreMap, settings: Settings, extruded: boolean)
   setVisible(map, LAYER.territoryExtrusion, showFill && extruded);
   setVisible(map, LAYER.territoryOutline, showOutline);
 
-  map.setPaintProperty(LAYER.territoryFill, "fill-opacity", settings["territory.fillOpacity"]);
+  const fillOpacity = settings["territory.fillOpacity"];
+  map.setPaintProperty(
+    LAYER.territoryFill,
+    "fill-opacity",
+    settings["simplify.fadeByShare"] ? ["*", fillOpacity, ["coalesce", ["get", "share"], 1]] : fillOpacity,
+  );
   map.setPaintProperty(LAYER.territoryExtrusion, "fill-extrusion-opacity", settings["territory.fillOpacity"]);
   const height = settings["territory.height"];
   map.setPaintProperty(

@@ -25,6 +25,11 @@ export interface Settings {
   "territory.growth": number;
   "territory.height": number;
   "territory.heightByPlayer": boolean;
+  "simplify.enabled": boolean;
+  "simplify.minHexPixels": number;
+  "simplify.minShare": number;
+  "simplify.fadeByShare": boolean;
+  "simplify.gridFollows": boolean;
   "runs.enabled": boolean;
   "runs.style": (typeof RUN_STYLES)[number];
   "runs.lineWidth": number;
@@ -86,6 +91,11 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   "territory.growth": 1,
   "territory.height": 30,
   "territory.heightByPlayer": false,
+  "simplify.enabled": true,
+  "simplify.minHexPixels": 14,
+  "simplify.minShare": 0,
+  "simplify.fadeByShare": true,
+  "simplify.gridFollows": true,
   "runs.enabled": true,
   "runs.style": "line",
   "runs.lineWidth": 3,
@@ -150,6 +160,16 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
       { key: "territory.growth", kind: "range", min: 0, max: 4, step: 1 },
       { key: "territory.height", kind: "range", min: 0, max: 300, step: 5, unit: "m" },
       { key: "territory.heightByPlayer", kind: "toggle" },
+    ],
+  },
+  {
+    id: "simplify",
+    controls: [
+      { key: "simplify.enabled", kind: "toggle" },
+      { key: "simplify.minHexPixels", kind: "range", min: 4, max: 60, step: 1, unit: "px" },
+      { key: "simplify.minShare", kind: "range", min: 0, max: 0.9, step: 0.05 },
+      { key: "simplify.fadeByShare", kind: "toggle" },
+      { key: "simplify.gridFollows", kind: "toggle" },
     ],
   },
   {

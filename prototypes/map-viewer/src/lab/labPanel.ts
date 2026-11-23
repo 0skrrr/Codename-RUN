@@ -61,6 +61,14 @@ export function createLabPanel(container: HTMLElement, handlers: LabPanelHandler
           area: Math.round(labInfo.hexAreaSquareMeters),
         }),
       ];
+      if (labInfo.simplifiedResolution !== undefined) {
+        lines.push(
+          t("lab.info.simplified", {
+            resolution: labInfo.simplifiedResolution,
+            edge: Math.round(labInfo.simplifiedEdgeMeters),
+          }),
+        );
+      }
       if (labInfo.gridHidden) lines.push(t("lab.info.gridHidden"));
       if (labInfo.roadsMissing) lines.push(t("lab.info.roadsMissing"));
       info.replaceChildren(...lines.map((line) => paragraph(line, "")));

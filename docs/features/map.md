@@ -65,9 +65,17 @@ The viewer's **Hex lab** panel is for deciding how the game should look. Every v
 | Base map | Fade the map, 3D buildings |
 | Hex grid | On/off, hex size (H3 resolution 7–13, shown as edge length in metres), line colour, width, opacity |
 | Territories | Fill / border / both, border around every hex or around the whole area, opacity, border width, how far territory spreads around a run, height in 2.5D, different height per player |
+| Zoomed-out view | Simplify into bigger hexes when zoomed out, smallest hex size on screen, minimum dominance to colour a hex, fade contested areas, grid follows the simplified size |
 | Runs | Line / hexes it crossed / both, width, opacity, dashed |
 | Trade routes | Line / chain of hexes / both, width fixed or by bandwidth, colour fixed or low→high bandwidth gradient, height in 2.5D, moving resource packets with speed and size |
 | Demo scenario | Random seed, players, runs per player, run length, number of trade routes, "generate around current view" |
+
+### Zoomed-out simplification
+Zoomed out, the real-size hexes would be specks. With *Simplify when zoomed out* on, the lab switches to coarser H3 hexes whenever hexes would be smaller than the chosen number of pixels on screen. Every H3 hex has one parent about 7× bigger, so each big hex gathers the small hexes inside it and takes the colour of the player who owns the most of them. Details like exact borders disappear on purpose.
+
+- *Minimum dominance* leaves a big hex uncoloured unless its leader owns at least that share of the owned hexes inside it.
+- *Fade contested areas* makes big hexes more transparent the closer the fight is (2.5D blocks don't fade; MapLibre can't vary extrusion opacity per hex).
+- The panel shows which resolution is being drawn, e.g. "resolution 7 (edge ≈ 1,406 m)".
 
 ### The demo scenario is fake
 There is no game server yet, so the lab invents a scenario: each player gets a home intersection and does random walks along real roads from it. Territory is every hex a run crossed, plus N rings around it; contested hexes go to whoever ran through them more. Trade routes are longer walks with a random bandwidth between 10 and 1000. The same seed always gives the same scenario, so a saved preset shows the same picture for everyone.
