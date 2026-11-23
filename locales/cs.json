@@ -116,5 +116,6 @@
   "lab.option.mostOfClaimed": "Většina zabraného území",
   "lab.option.majorityOfArea": "Přes 50 % celého hexu",
   "lab.control.scenario.areaKm": "Poloměr herní oblasti",
-  "lab.control.scenario.fillPercent": "Zaplnění mapy územím"
+  "lab.control.scenario.fillPercent": "Zaplnění mapy územím",
+  "lab.option.leaderOfMostlyClaimed": "Přes 50 % zabráno, vyhrává největší vlastník"
 }

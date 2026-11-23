@@ -116,5 +116,6 @@
   "lab.option.mostOfClaimed": "Most of the claimed land",
   "lab.option.majorityOfArea": "Over 50% of the whole hex",
   "lab.control.scenario.areaKm": "Play area radius",
-  "lab.control.scenario.fillPercent": "Map filled by territories"
+  "lab.control.scenario.fillPercent": "Map filled by territories",
+  "lab.option.leaderOfMostlyClaimed": "Over 50% claimed, biggest owner wins"
 }

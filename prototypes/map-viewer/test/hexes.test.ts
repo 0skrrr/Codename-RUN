@@ -110,6 +110,15 @@ describe("aggregateOwnership", () => {
     assert.equal(aggregateOwnership(exactlyHalfOrLess, coarse, 0, "mostOfClaimed").size, 1);
   });
 
+  it("with the mostly-claimed rule, gives a hex over half claimed to the biggest owner", () => {
+    const mixed = new Map(children.slice(0, 30).map((cell, index) => [cell, index < 15 ? 0 : index < 25 ? 1 : 2]));
+    const sparse = new Map(children.slice(0, 20).map((cell) => [cell, 0]));
+
+    assert.equal(aggregateOwnership(mixed, coarse, 0, "leaderOfMostlyClaimed").get(parent)?.playerId, 0);
+    assert.equal(aggregateOwnership(mixed, coarse, 0, "majorityOfArea").size, 0);
+    assert.equal(aggregateOwnership(sparse, coarse, 0, "leaderOfMostlyClaimed").size, 0);
+  });
+
   it("leaves a coarse hex empty when nobody dominates enough", () => {
     const owners = new Map(children.map((cell, index) => [cell, index % 2]));
 

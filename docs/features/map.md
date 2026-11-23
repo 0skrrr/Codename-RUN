@@ -76,7 +76,7 @@ The viewer's **Hex lab** panel is for deciding how the game should look. Every v
 ### Zoomed-out simplification
 Zoomed out, the real-size hexes would be specks. With *Simplify when zoomed out* on, the lab switches to coarser H3 hexes whenever hexes would be smaller than the chosen number of pixels on screen. Every H3 hex has one parent about 7× bigger, so each big hex gathers the small hexes inside it and takes the colour of the player who owns the most of them. Details like exact borders disappear on purpose.
 
-- *Who gets a big hex* picks the rule: **most of the claimed land** (the leader among owned small hexes wins, even if most of the area is unclaimed) or **over 50% of the whole hex** (a player must own more than half of the big hex's entire area, unclaimed land included; *minimum dominance* is ignored).
+- *Who gets a big hex* picks the rule: **most of the claimed land** (the leader among owned small hexes wins, even if most of the area is unclaimed) **over 50% of the whole hex** (a player must own more than half of the big hex's entire area, unclaimed land included), or **over 50% claimed, biggest owner wins** (more than half of the big hex's area must be claimed by anyone, and the player with the largest share takes it). *Minimum dominance* only applies to the first rule.
 - *Minimum dominance* leaves a big hex uncoloured unless its leader owns at least that share of the owned hexes inside it.
 - *Fade contested areas* makes big hexes more transparent the closer the fight is (2.5D blocks don't fade; MapLibre can't vary extrusion opacity per hex).
 - The panel shows which resolution is being drawn, e.g. "resolution 7 (edge ≈ 1,406 m)".

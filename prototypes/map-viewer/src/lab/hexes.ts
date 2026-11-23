@@ -77,7 +77,7 @@ export function fullyOwned(owners: ReadonlyMap<string, number>): Map<string, Own
   return new Map([...owners].map(([cell, playerId]) => [cell, { playerId, share: 1 }]));
 }
 
-export type AggregationRule = "mostOfClaimed" | "majorityOfArea";
+export type AggregationRule = "mostOfClaimed" | "majorityOfArea" | "leaderOfMostlyClaimed";
 
 const AREA_MAJORITY = 0.5;
 
@@ -102,12 +102,14 @@ export function aggregateOwnership(
   for (const [parent, counts] of countsByParent) {
     const playerId = strongestPlayer(counts);
     const owned = counts.get(playerId) ?? 0;
-    if (rule === "majorityOfArea") {
-      const share = owned / cellToChildrenSize(parent, childResolution);
-      if (share > AREA_MAJORITY) aggregated.set(parent, { playerId, share });
+    const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
+    if (rule !== "mostOfClaimed") {
+      const area = cellToChildrenSize(parent, childResolution);
+      const share = owned / area;
+      const decisive = rule === "majorityOfArea" ? share : total / area;
+      if (decisive > AREA_MAJORITY) aggregated.set(parent, { playerId, share });
       continue;
     }
-    const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
     const share = owned / total;
     if (share >= minShare) aggregated.set(parent, { playerId, share });
   }
