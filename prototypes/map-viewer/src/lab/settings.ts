@@ -216,7 +216,7 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
       { key: "scenario.runsPerPlayer", kind: "range", min: 1, max: 12, step: 1 },
       { key: "scenario.runLengthKm", kind: "range", min: 1, max: 20, step: 0.5, unit: "km" },
       { key: "scenario.tradeRoutes", kind: "range", min: 0, max: 12, step: 1 },
-      { key: "scenario.areaKm", kind: "range", min: 0.5, max: 6, step: 0.5, unit: "km" },
+      { key: "scenario.areaKm", kind: "range", min: 0.5, max: 25, step: 0.5, unit: "km" },
       { key: "scenario.fillPercent", kind: "range", min: 0, max: 100, step: 5, unit: "%" },
     ],
   },
