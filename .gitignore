@@ -13,3 +13,7 @@ android/.gradle/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+data/osm/
+data/geojson/
+*.partial

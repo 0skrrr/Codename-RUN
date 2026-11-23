@@ -1,0 +1,14 @@
+{
+  "name": "@codename-run/osm",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "saxes": "6.0.0"
+  }
+}

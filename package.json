@@ -1,0 +1,20 @@
+{
+  "name": "codename-run",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "osm:fetch:zlin": "node packages/osm/src/cli/extract.ts 440923 data/osm/zlin-district.osm",
+    "osm:convert:zlin": "node packages/osm/src/cli/convert.ts data/osm/zlin-district.osm data/geojson/zlin-district",
+    "map:dev": "pnpm --filter @codename-run/map-viewer dev",
+    "test": "pnpm -r test",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p prototypes/map-viewer/tsconfig.json && tsc --noEmit -p prototypes/map-viewer/tsconfig.node.json"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "7.0.2"
+  }
+}
