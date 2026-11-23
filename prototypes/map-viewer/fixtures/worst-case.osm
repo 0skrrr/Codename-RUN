@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand-written worst-case fixture">
+  <node id="1" lat="49.226000" lon="17.665000"/>
+  <node id="2" lat="49.226000" lon="17.665800"/>
+  <node id="3" lat="49.226600" lon="17.665800"/>
+  <node id="4" lat="49.226600" lon="17.665000"/>
+  <node id="5" lat="49.226000" lon="17.666200"/>
+  <node id="6" lat="49.226000" lon="17.667000"/>
+  <node id="7" lat="49.226600" lon="17.667000"/>
+  <node id="8" lat="49.226600" lon="17.666200"/>
+  <node id="9" lat="49.226000" lon="17.667400"/>
+  <node id="10" lat="49.226000" lon="17.668200"/>
+  <node id="11" lat="49.226600" lon="17.668200"/>
+  <node id="12" lat="49.226600" lon="17.667400"/>
+  <node id="13" lat="49.226000" lon="17.668600"/>
+  <node id="14" lat="49.226000" lon="17.669400"/>
+  <node id="15" lat="49.226600" lon="17.669400"/>
+  <node id="16" lat="49.226600" lon="17.668600"/>
+  <node id="17" lat="49.227200" lon="17.665000"/>
+  <node id="18" lat="49.227200" lon="17.665800"/>
+  <node id="19" lat="49.227800" lon="17.665800"/>
+  <node id="20" lat="49.227800" lon="17.665000"/>
+  <node id="21" lat="49.227200" lon="17.666200"/>
+  <node id="22" lat="49.227200" lon="17.667000"/>
+  <node id="23" lat="49.227800" lon="17.667000"/>
+  <node id="24" lat="49.227800" lon="17.666200"/>
+  <node id="25" lat="49.227200" lon="17.667400"/>
+  <node id="26" lat="49.227200" lon="17.668200"/>
+  <node id="27" lat="49.227800" lon="17.668200"/>
+  <node id="28" lat="49.227800" lon="17.667400"/>
+  <node id="29" lat="49.227200" lon="17.668600"/>
+  <node id="30" lat="49.227200" lon="17.669400"/>
+  <node id="31" lat="49.227800" lon="17.669400"/>
+  <node id="32" lat="49.227800" lon="17.668600"/>
+  <node id="33" lat="49.225000" lon="17.665000"/>
+  <node id="34" lat="49.225000" lon="17.669500"/>
+  <node id="35" lat="49.224200" lon="17.665000"/>
+  <node id="36" lat="49.224200" lon="17.669500"/>
+  <node id="37" lat="49.223400" lon="17.665000"/>
+  <node id="38" lat="49.223400" lon="17.669500"/>
+  <way id="100">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <nd ref="3"/>
+    <nd ref="4"/>
+    <nd ref="1"/>
+    <tag k="building" v="school"/>
+    <tag k="name" v="Základní škola a Mateřská škola Zlín, Křiby 4788, příspěvková organizace"/>
+  </way>
+  <way id="101">
+    <nd ref="5"/>
+    <nd ref="6"/>
+    <nd ref="7"/>
+    <nd ref="8"/>
+    <nd ref="5"/>
+    <tag k="building" v="yes"/>
+  </way>
+  <way id="102">
+    <nd ref="9"/>
+    <nd ref="10"/>
+    <nd ref="11"/>
+    <nd ref="12"/>
+    <nd ref="9"/>
+    <tag k="building" v="retail"/>
+    <tag k="name" v="☕ Kavárna Vrba 🌳"/>
+  </way>
+  <way id="103">
+    <nd ref="13"/>
+    <nd ref="14"/>
+    <nd ref="15"/>
+    <nd ref="16"/>
+    <nd ref="13"/>
+    <tag k="building" v="pub"/>
+    <tag k="name" v="U"/>
+  </way>
+  <way id="104">
+    <nd ref="17"/>
+    <nd ref="18"/>
+    <nd ref="19"/>
+    <nd ref="20"/>
+    <nd ref="17"/>
+    <tag k="building" v="religious"/>
+    <tag k="name" v="المركز الإسلامي في زلين"/>
+  </way>
+  <way id="105">
+    <nd ref="21"/>
+    <nd ref="22"/>
+    <nd ref="23"/>
+    <nd ref="24"/>
+    <nd ref="21"/>
+    <tag k="building" v="commercial"/>
+    <tag k="name" v="www.zlinsky-kraj-kultura-a-sport-prispevkova-organizace.cz"/>
+  </way>
+  <way id="106">
+    <nd ref="25"/>
+    <nd ref="26"/>
+    <nd ref="27"/>
+    <nd ref="28"/>
+    <nd ref="25"/>
+    <tag k="building" v="apartments"/>
+    <tag k="name" v="Bytový dům Družstvo vlastníků jednotek Obeciny XVII/4512–4518"/>
+  </way>
+  <way id="107">
+    <nd ref="29"/>
+    <nd ref="30"/>
+    <nd ref="31"/>
+    <nd ref="32"/>
+    <nd ref="29"/>
+    <tag k="building" v="construction"/>
+    <tag k="name" v="Nová budova Krajské nemocnice T. Bati, a. s. — pavilon 32 (urgentní příjem a JIP)"/>
+  </way>
+  <way id="108">
+    <nd ref="33"/>
+    <nd ref="34"/>
+    <tag k="highway" v="living_street"/>
+    <tag k="name" v="náměstí Tomáše Garrigua Masaryka"/>
+  </way>
+  <way id="109">
+    <nd ref="35"/>
+    <nd ref="36"/>
+    <tag k="highway" v="motorway_link"/>
+  </way>
+  <way id="110">
+    <nd ref="37"/>
+    <nd ref="38"/>
+    <tag k="highway" v="track"/>
+    <tag k="name" v="Polní cesta k vysílači Tlustá hora (pouze pro vozidla s povolením Lesů ČR)"/>
+  </way>
+</osm>

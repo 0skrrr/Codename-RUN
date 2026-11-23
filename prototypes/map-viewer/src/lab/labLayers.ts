@@ -5,6 +5,7 @@ import type {
   Map as MapLibreMap,
 } from "maplibre-gl";
 import { featureCollection, type LabFeatureCollection } from "./geo.ts";
+import type { HexFadeZooms } from "./hexes.ts";
 import type { Settings } from "./settings.ts";
 
 export const LAB_SOURCES = {
@@ -21,8 +22,10 @@ type LabSource = (typeof LAB_SOURCES)[keyof typeof LAB_SOURCES];
 
 const LAYER = {
   grid: "lab-grid-line",
+  territoryGlow: "lab-territory-glow",
   territoryFill: "lab-territory-fill",
   territoryExtrusion: "lab-territory-extrusion",
+  territoryCellOutline: "lab-territory-cell-outline",
   territoryOutline: "lab-territory-outline",
   runCells: "lab-run-cells",
   runLine: "lab-run-line",
@@ -34,9 +37,14 @@ const LAYER = {
 } as const;
 
 const BUILDINGS_SOURCE = "osm-buildings";
-const BUILDINGS_MIN_ZOOM = 13;
-const BUILDING_COLOR = "#d9d0c9";
-const PACKET_STROKE_COLOR = "#ffffff";
+const BUILDINGS_MIN_ZOOM = 14;
+const BUILDING_COLOR = "#2a2f38";
+const PACKET_STROKE_COLOR = "#0b0d12";
+const GLOW_OPACITY = 0.35;
+const GLOW_WIDTH_FACTOR = 5;
+const GLOW_BLUR_FACTOR = 4;
+const CELL_OUTLINE_WIDTH = 1;
+const CELL_OUTLINE_OPACITY = 0.85;
 const RUN_CELL_OPACITY_FACTOR = 0.5;
 const TRADE_CELL_OPACITY = 0.55;
 const MIN_TRADE_EXTRUSION_FACTOR = 0.1;
@@ -48,6 +56,7 @@ const BASE_OPACITY_PROPERTIES: Readonly<Record<string, "fill-opacity" | "line-op
 };
 
 const SHARE: ExpressionSpecification = ["get", "share"];
+const MERGED: ExpressionSpecification = ["==", ["get", "shape"], "merged"];
 
 export function addLabLayers(map: MapLibreMap): void {
   for (const source of Object.values(LAB_SOURCES)) {
@@ -60,13 +69,27 @@ export function setLabData(map: MapLibreMap, source: LabSource, data: LabFeature
   (map.getSource(source) as GeoJSONSource | undefined)?.setData(data);
 }
 
-export function applyLabSettings(map: MapLibreMap, settings: Settings, baseLayerIds: readonly string[]): void {
+export function applyLabSettings(
+  map: MapLibreMap,
+  settings: Settings,
+  baseLayerIds: readonly string[],
+  hexFade: HexFadeZooms,
+): void {
   const extruded = settings["view.mode"] === "extruded";
+  const fadeIn = (opacity: number): ExpressionSpecification => [
+    "interpolate",
+    ["linear"],
+    ["zoom"],
+    hexFade.start,
+    0,
+    hexFade.end,
+    opacity,
+  ];
   applyBaseMap(map, settings, baseLayerIds, extruded);
-  applyGrid(map, settings);
-  applyTerritory(map, settings, extruded);
-  applyRuns(map, settings);
-  applyTradeRoutes(map, settings, extruded);
+  applyGrid(map, settings, fadeIn);
+  applyTerritory(map, settings, extruded, fadeIn);
+  applyRuns(map, settings, fadeIn);
+  applyTradeRoutes(map, settings, extruded, fadeIn);
   if (Math.round(map.getPitch()) !== settings["view.pitch"]) map.easeTo({ pitch: settings["view.pitch"] });
 }
 
@@ -81,28 +104,28 @@ function applyBaseMap(map: MapLibreMap, settings: Settings, baseLayerIds: readon
   map.setPaintProperty(LAYER.buildingExtrusion, "fill-extrusion-opacity", settings["baseMap.opacity"]);
 }
 
-function applyGrid(map: MapLibreMap, settings: Settings): void {
+type FadeIn = (opacity: number) => ExpressionSpecification;
+
+function applyGrid(map: MapLibreMap, settings: Settings, fadeIn: FadeIn): void {
   setVisible(map, LAYER.grid, settings["hexGrid.enabled"]);
   map.setPaintProperty(LAYER.grid, "line-color", settings["hexGrid.lineColor"]);
   map.setPaintProperty(LAYER.grid, "line-width", settings["hexGrid.lineWidth"]);
-  map.setPaintProperty(LAYER.grid, "line-opacity", settings["hexGrid.lineOpacity"]);
+  map.setPaintProperty(LAYER.grid, "line-opacity", fadeIn(settings["hexGrid.lineOpacity"]));
 }
 
-function applyTerritory(map: MapLibreMap, settings: Settings, extruded: boolean): void {
+function applyTerritory(map: MapLibreMap, settings: Settings, extruded: boolean, fadeIn: FadeIn): void {
   const enabled = settings["territory.enabled"];
   const style = settings["territory.style"];
   const showFill = enabled && style !== "outline";
   const showOutline = enabled && style !== "fill";
+  const outlineWidth = settings["territory.outlineWidth"];
   setVisible(map, LAYER.territoryFill, showFill && !extruded);
   setVisible(map, LAYER.territoryExtrusion, showFill && extruded);
   setVisible(map, LAYER.territoryOutline, showOutline);
+  setVisible(map, LAYER.territoryGlow, showOutline && settings["territory.glow"]);
+  setVisible(map, LAYER.territoryCellOutline, showOutline && settings["territory.border"] === "perHex");
 
-  const fillOpacity = settings["territory.fillOpacity"];
-  map.setPaintProperty(
-    LAYER.territoryFill,
-    "fill-opacity",
-    settings["simplify.fadeByShare"] ? ["*", fillOpacity, ["coalesce", ["get", "share"], 1]] : fillOpacity,
-  );
+  map.setPaintProperty(LAYER.territoryFill, "fill-opacity", settings["territory.fillOpacity"]);
   map.setPaintProperty(LAYER.territoryExtrusion, "fill-extrusion-opacity", settings["territory.fillOpacity"]);
   const height = settings["territory.height"];
   map.setPaintProperty(
@@ -110,12 +133,13 @@ function applyTerritory(map: MapLibreMap, settings: Settings, extruded: boolean)
     "fill-extrusion-height",
     settings["territory.heightByPlayer"] ? ["*", height, ["get", "heightFactor"]] : height,
   );
-  map.setPaintProperty(LAYER.territoryOutline, "line-width", settings["territory.outlineWidth"]);
-  const outlineShape = settings["territory.border"] === "merged" ? "merged" : "cell";
-  map.setFilter(LAYER.territoryOutline, ["==", ["get", "shape"], outlineShape]);
+  map.setPaintProperty(LAYER.territoryOutline, "line-width", outlineWidth);
+  map.setPaintProperty(LAYER.territoryGlow, "line-width", outlineWidth * GLOW_WIDTH_FACTOR);
+  map.setPaintProperty(LAYER.territoryGlow, "line-blur", outlineWidth * GLOW_BLUR_FACTOR);
+  map.setPaintProperty(LAYER.territoryCellOutline, "line-opacity", fadeIn(CELL_OUTLINE_OPACITY));
 }
 
-function applyRuns(map: MapLibreMap, settings: Settings): void {
+function applyRuns(map: MapLibreMap, settings: Settings, fadeIn: FadeIn): void {
   const enabled = settings["runs.enabled"];
   const style = settings["runs.style"];
   setVisible(map, LAYER.runLine, enabled && style !== "hexes");
@@ -123,10 +147,10 @@ function applyRuns(map: MapLibreMap, settings: Settings): void {
   map.setPaintProperty(LAYER.runLine, "line-width", settings["runs.lineWidth"]);
   map.setPaintProperty(LAYER.runLine, "line-opacity", settings["runs.opacity"]);
   map.setPaintProperty(LAYER.runLine, "line-dasharray", settings["runs.dashed"] ? DASHED_LINE : SOLID_LINE);
-  map.setPaintProperty(LAYER.runCells, "fill-opacity", settings["runs.opacity"] * RUN_CELL_OPACITY_FACTOR);
+  map.setPaintProperty(LAYER.runCells, "fill-opacity", fadeIn(settings["runs.opacity"] * RUN_CELL_OPACITY_FACTOR));
 }
 
-function applyTradeRoutes(map: MapLibreMap, settings: Settings, extruded: boolean): void {
+function applyTradeRoutes(map: MapLibreMap, settings: Settings, extruded: boolean, fadeIn: FadeIn): void {
   const enabled = settings["tradeRoutes.enabled"];
   const style = settings["tradeRoutes.style"];
   const showCells = enabled && style !== "line";
@@ -138,6 +162,7 @@ function applyTradeRoutes(map: MapLibreMap, settings: Settings, extruded: boolea
   const color = tradeColor(settings);
   map.setPaintProperty(LAYER.tradeLine, "line-color", color);
   map.setPaintProperty(LAYER.tradeCells, "fill-color", color);
+  map.setPaintProperty(LAYER.tradeCells, "fill-opacity", fadeIn(TRADE_CELL_OPACITY));
   map.setPaintProperty(LAYER.tradeExtrusion, "fill-extrusion-color", color);
   map.setPaintProperty(LAYER.packets, "circle-color", color);
   map.setPaintProperty(LAYER.tradeLine, "line-width", tradeWidth(settings));
@@ -177,17 +202,39 @@ function labLayerSpecifications(hasBuildings: boolean): LayerSpecification[] {
   const color: ExpressionSpecification = ["get", "color"];
   const layers: LayerSpecification[] = [
     { id: LAYER.grid, type: "line", source: LAB_SOURCES.grid, paint: {} },
-    { id: LAYER.territoryFill, type: "fill", source: LAB_SOURCES.territory, filter: ["==", ["get", "shape"], "cell"], paint: { "fill-color": color } },
+    {
+      id: LAYER.territoryGlow,
+      type: "line",
+      source: LAB_SOURCES.territory,
+      filter: MERGED,
+      layout: { "line-join": "round" },
+      paint: { "line-color": color, "line-opacity": GLOW_OPACITY },
+    },
+    { id: LAYER.territoryFill, type: "fill", source: LAB_SOURCES.territory, filter: MERGED, paint: { "fill-color": color } },
     {
       id: LAYER.territoryExtrusion,
       type: "fill-extrusion",
       source: LAB_SOURCES.territory,
-      filter: ["==", ["get", "shape"], "cell"],
+      filter: MERGED,
       paint: { "fill-extrusion-color": color, "fill-extrusion-base": 0 },
     },
-    { id: LAYER.territoryOutline, type: "line", source: LAB_SOURCES.territory, layout: { "line-join": "round" }, paint: { "line-color": color } },
+    {
+      id: LAYER.territoryCellOutline,
+      type: "line",
+      source: LAB_SOURCES.territory,
+      filter: ["==", ["get", "shape"], "cell"],
+      paint: { "line-color": color, "line-width": CELL_OUTLINE_WIDTH },
+    },
+    {
+      id: LAYER.territoryOutline,
+      type: "line",
+      source: LAB_SOURCES.territory,
+      filter: MERGED,
+      layout: { "line-join": "round" },
+      paint: { "line-color": color },
+    },
     { id: LAYER.runCells, type: "fill", source: LAB_SOURCES.runCells, paint: { "fill-color": color } },
-    { id: LAYER.tradeCells, type: "fill", source: LAB_SOURCES.tradeCells, paint: { "fill-opacity": TRADE_CELL_OPACITY } },
+    { id: LAYER.tradeCells, type: "fill", source: LAB_SOURCES.tradeCells, paint: {} },
     { id: LAYER.tradeExtrusion, type: "fill-extrusion", source: LAB_SOURCES.tradeCells, paint: { "fill-extrusion-base": 0 } },
     { id: LAYER.tradeLine, type: "line", source: LAB_SOURCES.tradeLines, layout: { "line-cap": "round", "line-join": "round" }, paint: {} },
     { id: LAYER.runLine, type: "line", source: LAB_SOURCES.runLines, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": color } },

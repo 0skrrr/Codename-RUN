@@ -2,15 +2,16 @@ import { getHexagonAreaAvg, getHexagonEdgeLengthAvg } from "h3-js";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { cumulativeDistances, featureCollection, pointAlongPath, type LabFeature, type LngLat } from "./geo.ts";
 import {
-  aggregateOwnership,
-  displayResolution,
-  fullyOwned,
   gridFeatures,
+  hexFadeZooms,
   runFeatures,
   territoryFeatures,
   territoryOwnership,
+  territorySizes,
   tradeRouteFeatures,
   type Bounds,
+  type HexFadeZooms,
+  type TerritorySize,
 } from "./hexes.ts";
 import { addLabLayers, applyLabSettings, LAB_SOURCES, setLabData } from "./labLayers.ts";
 import { buildRoadGraph, type RoadGraph } from "./roadGraph.ts";
@@ -24,10 +25,9 @@ export interface LabInfo {
   territoryHexes: number;
   hexEdgeMeters: number;
   hexAreaSquareMeters: number;
-  gridHidden: boolean;
   roadsMissing: boolean;
-  simplifiedResolution: number | undefined;
-  simplifiedEdgeMeters: number;
+  hexFade: HexFadeZooms;
+  territories: TerritorySize[];
 }
 
 export interface LabController {
@@ -37,6 +37,7 @@ export interface LabController {
 
 const GRAPH_RADIUS_METERS = 6_000;
 const MAX_GRID_CELLS = 25_000;
+const GRID_PADDING_FACTOR = 0.5;
 const METERS_PER_KILOMETER = 1_000;
 const SQUARE_METERS_PER_SQUARE_KILOMETER = 1_000_000;
 const PACKET_METERS_PER_SECOND = 120;
@@ -44,6 +45,7 @@ const MILLISECONDS_PER_SECOND = 1_000;
 const MAX_PACKETS_PER_ROUTE = 6;
 const EXCLUDED_ROAD_KINDS: ReadonlySet<string> = new Set(["motorway", "motorway_link", "trunk", "trunk_link"]);
 const HEX_DATA_KEYS: ReadonlySet<SettingKey> = new Set(["hexGrid.resolution", "territory.growth"]);
+const GRID_KEYS: ReadonlySet<SettingKey> = new Set(["hexGrid.resolution", "zoom.hexesFromPixels"]);
 
 interface PacketRoute {
   path: LngLat[];
@@ -68,9 +70,7 @@ export async function createLab(
   let graphCenterKey = "";
   let scenario: Scenario = { players: [], runs: [], tradeRoutes: [] };
   let territoryHexes = 0;
-  let baseOwners = new Map<string, number>();
-  let territoryResolution = -1;
-  let gridHidden = false;
+  let owners = new Map<string, number>();
   let packetRoutes: PacketRoute[] = [];
 
   const center = (): LngLat => [settings["scenario.centerLongitude"], settings["scenario.centerLatitude"]];
@@ -91,26 +91,14 @@ export async function createLab(
     packetRoutes = scenario.tradeRoutes.map(toPacketRoute);
   };
 
-  const currentDisplayResolution = (): number => {
-    const base = settings["hexGrid.resolution"];
-    if (!settings["simplify.enabled"]) return base;
-    return displayResolution(base, map.getZoom(), map.getCenter().lat, settings["simplify.minHexPixels"]);
-  };
-
-  const rebuildTerritory = (): void => {
-    territoryResolution = currentDisplayResolution();
-    const owned =
-      territoryResolution < settings["hexGrid.resolution"]
-        ? aggregateOwnership(baseOwners, territoryResolution, settings["simplify.minShare"])
-        : fullyOwned(baseOwners);
-    setLabData(map, LAB_SOURCES.territory, territoryFeatures(owned, scenario.players));
-  };
+  const hexFade = (): HexFadeZooms =>
+    hexFadeZooms(settings["hexGrid.resolution"], settings["scenario.centerLatitude"], settings["zoom.hexesFromPixels"]);
 
   const rebuildHexData = (): void => {
     const resolution = settings["hexGrid.resolution"];
-    baseOwners = territoryOwnership(scenario.runs, resolution, settings["territory.growth"]);
-    territoryHexes = baseOwners.size;
-    rebuildTerritory();
+    owners = territoryOwnership(scenario.runs, resolution, settings["territory.growth"]);
+    territoryHexes = owners.size;
+    setLabData(map, LAB_SOURCES.territory, territoryFeatures(owners, scenario.players));
     const runs = runFeatures(scenario.runs, scenario.players, resolution);
     setLabData(map, LAB_SOURCES.runLines, runs.lines);
     setLabData(map, LAB_SOURCES.runCells, runs.cells);
@@ -120,17 +108,13 @@ export async function createLab(
   };
 
   const rebuildGrid = (): void => {
-    const bounds = map.getBounds().toArray().flat() as Bounds;
-    const followsSimplified = settings["simplify.enabled"] && settings["simplify.gridFollows"];
-    const resolution = followsSimplified ? currentDisplayResolution() : settings["hexGrid.resolution"];
-    const grid = gridFeatures(bounds, resolution, MAX_GRID_CELLS);
-    gridHidden = grid === undefined;
+    const hexesVisible = map.getZoom() >= hexFade().start;
+    const grid = hexesVisible ? gridFeatures(paddedBounds(map), settings["hexGrid.resolution"], MAX_GRID_CELLS) : undefined;
     setLabData(map, LAB_SOURCES.grid, grid ?? featureCollection([]));
   };
 
   const reportInfo = (): void => {
     const resolution = settings["hexGrid.resolution"];
-    const simplified = territoryResolution < resolution ? territoryResolution : undefined;
     onInfo({
       players: scenario.players.length,
       runs: scenario.runs.length,
@@ -138,10 +122,9 @@ export async function createLab(
       territoryHexes,
       hexEdgeMeters: getHexagonEdgeLengthAvg(resolution, "m"),
       hexAreaSquareMeters: getHexagonAreaAvg(resolution, "km2") * SQUARE_METERS_PER_SQUARE_KILOMETER,
-      gridHidden: settings["hexGrid.enabled"] && gridHidden,
       roadsMissing: roadLines.length === 0,
-      simplifiedResolution: simplified,
-      simplifiedEdgeMeters: simplified === undefined ? 0 : getHexagonEdgeLengthAvg(simplified, "m"),
+      hexFade: hexFade(),
+      territories: territorySizes(owners, scenario.players),
     });
   };
 
@@ -156,13 +139,9 @@ export async function createLab(
   rebuildScenario();
   rebuildHexData();
   rebuildGrid();
-  applyLabSettings(map, settings, baseLayerIds);
+  applyLabSettings(map, settings, baseLayerIds, hexFade());
   reportInfo();
-  map.on("moveend", () => {
-    if (currentDisplayResolution() !== territoryResolution) rebuildTerritory();
-    rebuildGrid();
-    reportInfo();
-  });
+  map.on("moveend", rebuildGrid);
   window.requestAnimationFrame(animatePackets);
 
   return {
@@ -170,11 +149,9 @@ export async function createLab(
       settings = next;
       const scenarioChanged = changedKey === undefined || changedKey.startsWith("scenario.");
       if (scenarioChanged) rebuildScenario();
-      const simplifyChanged = changedKey?.startsWith("simplify.") ?? false;
       if (scenarioChanged || (changedKey !== undefined && HEX_DATA_KEYS.has(changedKey))) rebuildHexData();
-      else if (simplifyChanged) rebuildTerritory();
-      if (changedKey === undefined || changedKey === "hexGrid.resolution" || simplifyChanged) rebuildGrid();
-      applyLabSettings(map, settings, baseLayerIds);
+      if (changedKey === undefined || GRID_KEYS.has(changedKey)) rebuildGrid();
+      applyLabSettings(map, settings, baseLayerIds, hexFade());
       reportInfo();
     },
     mapCenter() {
@@ -182,6 +159,13 @@ export async function createLab(
       return [lng, lat];
     },
   };
+}
+
+function paddedBounds(map: MapLibreMap): Bounds {
+  const [west, south, east, north] = map.getBounds().toArray().flat() as Bounds;
+  const padLongitude = (east - west) * GRID_PADDING_FACTOR;
+  const padLatitude = (north - south) * GRID_PADDING_FACTOR;
+  return [west - padLongitude, south - padLatitude, east + padLongitude, north + padLatitude];
 }
 
 async function loadWalkableRoads(url: string): Promise<LngLat[][]> {

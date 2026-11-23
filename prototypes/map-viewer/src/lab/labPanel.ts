@@ -23,7 +23,7 @@ export interface LabPanel {
   showInfo(info: LabInfo): void;
 }
 
-const OPEN_GROUPS: ReadonlySet<string> = new Set(["view", "hexGrid", "territory"]);
+const OPEN_GROUPS: ReadonlySet<string> = new Set(["territory", "zoom"]);
 const DEFAULT_EXPORT_NAME = "map-lab-settings";
 const DECIMALS_FOR_STEP_BELOW_ONE = 2;
 
@@ -61,15 +61,12 @@ export function createLabPanel(container: HTMLElement, handlers: LabPanelHandler
           area: Math.round(labInfo.hexAreaSquareMeters),
         }),
       ];
-      if (labInfo.simplifiedResolution !== undefined) {
-        lines.push(
-          t("lab.info.simplified", {
-            resolution: labInfo.simplifiedResolution,
-            edge: Math.round(labInfo.simplifiedEdgeMeters),
-          }),
-        );
-      }
-      if (labInfo.gridHidden) lines.push(t("lab.info.gridHidden"));
+      lines.push(
+        t("lab.info.hexFade", {
+          from: Math.round(labInfo.hexFade.start * 10) / 10,
+          to: Math.round(labInfo.hexFade.end * 10) / 10,
+        }),
+      );
       if (labInfo.roadsMissing) lines.push(t("lab.info.roadsMissing"));
       info.replaceChildren(...lines.map((line) => paragraph(line, "")));
     },

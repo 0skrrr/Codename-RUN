@@ -25,11 +25,8 @@ export interface Settings {
   "territory.growth": number;
   "territory.height": number;
   "territory.heightByPlayer": boolean;
-  "simplify.enabled": boolean;
-  "simplify.minHexPixels": number;
-  "simplify.minShare": number;
-  "simplify.fadeByShare": boolean;
-  "simplify.gridFollows": boolean;
+  "territory.glow": boolean;
+  "zoom.hexesFromPixels": number;
   "runs.enabled": boolean;
   "runs.style": (typeof RUN_STYLES)[number];
   "runs.lineWidth": number;
@@ -80,22 +77,19 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   "baseMap.buildingHeight": 12,
   "hexGrid.enabled": true,
   "hexGrid.resolution": 11,
-  "hexGrid.lineColor": "#5b5b5b",
+  "hexGrid.lineColor": "#ffffff",
   "hexGrid.lineWidth": 0.6,
-  "hexGrid.lineOpacity": 0.35,
+  "hexGrid.lineOpacity": 0.14,
   "territory.enabled": true,
   "territory.style": "fillOutline",
   "territory.border": "merged",
-  "territory.fillOpacity": 0.45,
+  "territory.fillOpacity": 0.3,
   "territory.outlineWidth": 2,
   "territory.growth": 1,
   "territory.height": 30,
   "territory.heightByPlayer": false,
-  "simplify.enabled": true,
-  "simplify.minHexPixels": 14,
-  "simplify.minShare": 0,
-  "simplify.fadeByShare": true,
-  "simplify.gridFollows": true,
+  "territory.glow": true,
+  "zoom.hexesFromPixels": 10,
   "runs.enabled": true,
   "runs.style": "line",
   "runs.lineWidth": 3,
@@ -107,9 +101,9 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   "tradeRoutes.minWidth": 2,
   "tradeRoutes.maxWidth": 12,
   "tradeRoutes.colorMode": "bandwidth",
-  "tradeRoutes.color": "#2b2d42",
-  "tradeRoutes.lowBandwidthColor": "#8ecae6",
-  "tradeRoutes.highBandwidthColor": "#d62828",
+  "tradeRoutes.color": "#e0e1dd",
+  "tradeRoutes.lowBandwidthColor": "#4cc9f0",
+  "tradeRoutes.highBandwidthColor": "#f72585",
   "tradeRoutes.maxHeight": 80,
   "tradeRoutes.packets": true,
   "tradeRoutes.packetSpeed": 1,
@@ -160,17 +154,12 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
       { key: "territory.growth", kind: "range", min: 0, max: 4, step: 1 },
       { key: "territory.height", kind: "range", min: 0, max: 300, step: 5, unit: "m" },
       { key: "territory.heightByPlayer", kind: "toggle" },
+      { key: "territory.glow", kind: "toggle" },
     ],
   },
   {
-    id: "simplify",
-    controls: [
-      { key: "simplify.enabled", kind: "toggle" },
-      { key: "simplify.minHexPixels", kind: "range", min: 4, max: 60, step: 1, unit: "px" },
-      { key: "simplify.minShare", kind: "range", min: 0, max: 0.9, step: 0.05 },
-      { key: "simplify.fadeByShare", kind: "toggle" },
-      { key: "simplify.gridFollows", kind: "toggle" },
-    ],
+    id: "zoom",
+    controls: [{ key: "zoom.hexesFromPixels", kind: "range", min: 4, max: 40, step: 1, unit: "px" }],
   },
   {
     id: "runs",

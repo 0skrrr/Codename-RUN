@@ -9,6 +9,7 @@
   "scripts": {
     "osm:fetch:zlin": "node packages/osm/src/cli/extract.ts 440923 data/osm/zlin-district.osm",
     "osm:convert:zlin": "node packages/osm/src/cli/convert.ts data/osm/zlin-district.osm data/geojson/zlin-district",
+    "map:fixtures": "node packages/osm/src/cli/convert.ts packages/osm/test/fixtures/small-town.osm data/geojson/small-town && node packages/osm/src/cli/convert.ts prototypes/map-viewer/fixtures/worst-case.osm data/geojson/worst-case",
     "map:dev": "pnpm --filter @codename-run/map-viewer dev",
     "test": "pnpm -r test",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p prototypes/map-viewer/tsconfig.json && tsc --noEmit -p prototypes/map-viewer/tsconfig.node.json"

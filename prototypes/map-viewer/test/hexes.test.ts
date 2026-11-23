@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { areNeighborCells, cellToChildren, cellToLatLng, gridDisk, latLngToCell } from "h3-js";
+import { areNeighborCells, cellToLatLng, getHexagonEdgeLengthAvg, gridDisk, latLngToCell } from "h3-js";
 import type { LngLat } from "../src/lab/geo.ts";
 import {
-  aggregateOwnership,
-  displayResolution,
   estimatedCellCount,
   gridFeatures,
+  hexFadeZooms,
   pathCells,
   territoryOwnership,
+  territorySizes,
 } from "../src/lab/hexes.ts";
 
 const RESOLUTION = 11;
@@ -83,42 +83,43 @@ describe("gridFeatures", () => {
   });
 });
 
-describe("aggregateOwnership", () => {
-  const fine = 11;
-  const coarse = 9;
-  const parent = latLngToCell(49.22, 17.66, coarse);
-  const children = cellToChildren(parent, fine);
+describe("hexFadeZooms", () => {
+  it("brings hexes in later for smaller hex sizes", () => {
+    const big = hexFadeZooms(9, 49.2, 10);
+    const small = hexFadeZooms(11, 49.2, 10);
 
-  it("gives a coarse hex the colour of the player owning most of it", () => {
-    const owners = new Map(children.map((cell, index) => [cell, index < 30 ? 0 : 1]));
-    const aggregated = aggregateOwnership(owners, coarse, 0);
-
-    assert.deepEqual([...aggregated.keys()], [parent]);
-    assert.equal(aggregated.get(parent)?.playerId, 0);
-    assert.ok(Math.abs((aggregated.get(parent)?.share ?? 0) - 30 / children.length) < 1e-9);
+    assert.ok(small.start > big.start);
   });
 
-  it("leaves a coarse hex empty when nobody dominates enough", () => {
-    const owners = new Map(children.map((cell, index) => [cell, index % 2]));
+  it("starts the fade where a hex edge is the requested number of pixels on screen", () => {
+    const { start } = hexFadeZooms(11, 49.2, 10);
+    const metersPerPixel = (40_075_016.686 * Math.cos((49.2 * Math.PI) / 180)) / (512 * 2 ** start);
 
-    assert.equal(aggregateOwnership(owners, coarse, 0.6).size, 0);
+    assert.ok(Math.abs(getHexagonEdgeLengthAvg(11, "m") / metersPerPixel - 10) < 1e-6);
+  });
+
+  it("finishes the fade a little closer in than it starts", () => {
+    const { start, end } = hexFadeZooms(11, 49.2, 10);
+
+    assert.ok(end > start && end - start < 1);
   });
 });
 
-describe("displayResolution", () => {
-  it("keeps the chosen size when hexes are big enough on screen", () => {
-    assert.equal(displayResolution(11, 17, 49.2, 14), 11);
-  });
+describe("territorySizes", () => {
+  const players = [
+    { id: 0, color: "#ff0000", heightFactor: 1 },
+    { id: 1, color: "#00ff00", heightFactor: 1 },
+  ];
 
-  it("switches to coarser hexes as you zoom out", () => {
-    const close = displayResolution(11, 14, 49.2, 14);
-    const far = displayResolution(11, 10, 49.2, 14);
+  it("counts the hexes each player owns, including players who own none", () => {
+    const owners = new Map([
+      ["a", 0],
+      ["b", 0],
+    ]);
 
-    assert.ok(close < 11);
-    assert.ok(far < close);
-  });
-
-  it("never returns a size finer than the chosen one", () => {
-    assert.equal(displayResolution(8, 19, 49.2, 4), 8);
+    assert.deepEqual(territorySizes(owners, players), [
+      { playerId: 0, color: "#ff0000", hexes: 2 },
+      { playerId: 1, color: "#00ff00", hexes: 0 },
+    ]);
   });
 });

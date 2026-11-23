@@ -1,7 +1,7 @@
 import { isValidPresetName, PRESET_FORMAT_VERSION, PRESETS_API_PATH } from "./presetFormat.ts";
 import { sanitizeSettings, type Settings } from "./settings.ts";
 
-const LAST_USED_STORAGE_KEY = "codename-run.map-lab.settings";
+const LAST_USED_STORAGE_KEY = "codename-run.map-lab.settings.v2";
 
 export function loadLastUsedSettings(): Settings {
   try {

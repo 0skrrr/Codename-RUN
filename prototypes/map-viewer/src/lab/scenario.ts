@@ -35,14 +35,14 @@ export interface ScenarioOptions {
 }
 
 export const PLAYER_COLORS = [
-  "#e63946",
-  "#1d70b8",
-  "#2a9d8f",
-  "#f4a261",
-  "#8338ec",
-  "#ffbe0b",
-  "#06d6a0",
-  "#ff006e",
+  "#ff3864",
+  "#2de2e6",
+  "#f9c80e",
+  "#7cff6b",
+  "#b967ff",
+  "#ff8a3d",
+  "#3d7bff",
+  "#ff5ec4",
 ] as const;
 
 const MIN_BANDWIDTH_EXPONENT = 1;

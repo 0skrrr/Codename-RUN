@@ -1,7 +1,6 @@
 import {
   cellsToMultiPolygon,
   cellToBoundary,
-  cellToParent,
   getHexagonEdgeLengthAvg,
   getHexagonAreaAvg,
   gridDisk,
@@ -14,14 +13,20 @@ import type { Player, Run, TradeRoute } from "./scenario.ts";
 
 export type Bounds = [west: number, south: number, east: number, north: number];
 
-export interface OwnedCell {
+export interface HexFadeZooms {
+  start: number;
+  end: number;
+}
+
+export interface TerritorySize {
   playerId: number;
-  share: number;
+  color: string;
+  hexes: number;
 }
 
 const EARTH_CIRCUMFERENCE_METERS = 40_075_016.686;
 const MAPLIBRE_TILE_PIXELS = 512;
-const COARSEST_RESOLUTION = 0;
+const HEX_FADE_ZOOM_SPAN = 0.75;
 
 const PATH_CELL_WEIGHT = 3;
 const GROWTH_CELL_WEIGHT = 1;
@@ -68,55 +73,26 @@ export function territoryOwnership(
   return owners;
 }
 
-export function fullyOwned(owners: ReadonlyMap<string, number>): Map<string, OwnedCell> {
-  return new Map([...owners].map(([cell, playerId]) => [cell, { playerId, share: 1 }]));
+export function hexFadeZooms(resolution: number, latitude: number, startPixels: number): HexFadeZooms {
+  const edgeMeters = getHexagonEdgeLengthAvg(resolution, "m");
+  const groundMetersAtZoomZero = (EARTH_CIRCUMFERENCE_METERS * Math.cos(latitude * DEGREES_TO_RADIANS)) / MAPLIBRE_TILE_PIXELS;
+  const start = Math.log2((startPixels * groundMetersAtZoomZero) / edgeMeters);
+  return { start, end: start + HEX_FADE_ZOOM_SPAN };
 }
 
-export function aggregateOwnership(
-  owners: ReadonlyMap<string, number>,
-  resolution: number,
-  minShare: number,
-): Map<string, OwnedCell> {
-  const countsByParent = new Map<string, Map<number, number>>();
-  for (const [cell, playerId] of owners) {
-    const parent = cellToParent(cell, resolution);
-    const counts = countsByParent.get(parent) ?? new Map<number, number>();
-    counts.set(playerId, (counts.get(playerId) ?? 0) + 1);
-    countsByParent.set(parent, counts);
-  }
-
-  const aggregated = new Map<string, OwnedCell>();
-  for (const [parent, counts] of countsByParent) {
-    const playerId = strongestPlayer(counts);
-    const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
-    const share = (counts.get(playerId) ?? 0) / total;
-    if (share >= minShare) aggregated.set(parent, { playerId, share });
-  }
-  return aggregated;
+export function territorySizes(owners: ReadonlyMap<string, number>, players: readonly Player[]): TerritorySize[] {
+  const counts = new Map<number, number>();
+  for (const playerId of owners.values()) counts.set(playerId, (counts.get(playerId) ?? 0) + 1);
+  return players.map((player) => ({ playerId: player.id, color: player.color, hexes: counts.get(player.id) ?? 0 }));
 }
 
-export function displayResolution(
-  baseResolution: number,
-  zoom: number,
-  latitude: number,
-  minHexPixels: number,
-): number {
-  const metersPerPixel =
-    (EARTH_CIRCUMFERENCE_METERS * Math.cos(latitude * DEGREES_TO_RADIANS)) / (MAPLIBRE_TILE_PIXELS * 2 ** zoom);
-  let resolution = baseResolution;
-  while (resolution > COARSEST_RESOLUTION && getHexagonEdgeLengthAvg(resolution, "m") / metersPerPixel < minHexPixels) {
-    resolution--;
-  }
-  return resolution;
-}
-
-export function territoryFeatures(owned: ReadonlyMap<string, OwnedCell>, players: readonly Player[]): LabFeatureCollection {
+export function territoryFeatures(owners: ReadonlyMap<string, number>, players: readonly Player[]): LabFeatureCollection {
   const features: LabFeature[] = [];
   const cellsByPlayer = new Map<number, string[]>();
-  for (const [cell, { playerId, share }] of owned) {
+  for (const [cell, playerId] of owners) {
     const player = players[playerId];
     if (!player) continue;
-    features.push(cellFeature(cell, { shape: "cell", color: player.color, heightFactor: player.heightFactor, share }));
+    features.push(cellFeature(cell, { shape: "cell", color: player.color, heightFactor: player.heightFactor }));
     const playerCells = cellsByPlayer.get(playerId);
     if (playerCells) playerCells.push(cell);
     else cellsByPlayer.set(playerId, [cell]);

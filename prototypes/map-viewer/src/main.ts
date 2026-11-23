@@ -23,32 +23,39 @@ import { createLab, type LabController } from "./lab/labController.ts";
 import { createLabPanel } from "./lab/labPanel.ts";
 import { loadLastUsedSettings, saveLastUsedSettings } from "./lab/presetStorage.ts";
 import { DEFAULT_SETTINGS, type SettingKey, type Settings } from "./lab/settings.ts";
-import { createPanel, type InspectedFeature, type Panel } from "./panel.ts";
+import { createInspectCard, type InspectCard, type InspectedFeature } from "./inspectCard.ts";
+import { createPanel, type Panel } from "./panel.ts";
+import { createTopBar, type TopBar } from "./topBar.ts";
+import { mountDataToggle } from "./dev/dataToggle.ts";
 
 const MAP_PADDING_PX = 24;
 const MAX_ZOOM = 19;
-const LAB_START_ZOOM = 13.5;
+const LAB_START_ZOOM = 13;
 const BASE_LAYER_IDS = Object.values(STYLE_LAYERS).flatMap((layers) => layers.map((layer) => layer.id));
 
 setWorkerUrl(mapLibreWorkerUrl);
 document.title = t("mapViewer.pageTitle");
 document.documentElement.lang = currentLanguage;
 
-const panel = createPanel(requiredElement("panel"));
-panel.showStatus(t("mapViewer.loading"));
+const topBar = createTopBar(requiredElement("topbar"));
+const panel = createPanel(requiredElement("panel"), requiredElement("settings-toggle") as HTMLButtonElement);
+const inspectCard = createInspectCard(requiredElement("inspect"));
+topBar.showStatus(t("mapViewer.loading"));
 
 const dataset = datasetNameFromUrl(window.location.search);
+if (import.meta.env.DEV) mountDataToggle(dataset);
 loadManifest(dataset)
   .then((manifest) => {
     if (manifest) {
-      showMap(manifest, panel);
+      topBar.showDataset(manifest.name);
+      showMap(manifest, panel, inspectCard);
       return;
     }
-    panel.showStatus(t("mapViewer.loadError", { name: dataset }));
+    topBar.showStatus(t("mapViewer.loadError", { name: dataset }));
   })
-  .catch(() => panel.showStatus(t("mapViewer.loadError", { name: dataset })));
+  .catch(() => topBar.showStatus(t("mapViewer.loadError", { name: dataset })));
 
-function showMap(manifest: DatasetManifest, sidePanel: Panel): void {
+function showMap(manifest: DatasetManifest, sidePanel: Panel, inspected: InspectCard): void {
   const initialSettings = loadLastUsedSettings();
   const labCenter: [number, number] = [initialSettings["scenario.centerLongitude"], initialSettings["scenario.centerLatitude"]];
   const viewFromLink = window.location.hash.length > 1;
@@ -61,8 +68,8 @@ function showMap(manifest: DatasetManifest, sidePanel: Panel): void {
     pitch: initialSettings["view.pitch"],
     ...startPosition(viewFromLink, startAtLab, labCenter, manifest.bounds),
   });
-  map.addControl(new NavigationControl(), "top-right");
-  map.addControl(new ScaleControl({ unit: "metric" }), "bottom-right");
+  map.addControl(new NavigationControl({ visualizePitch: true }), "bottom-right");
+  map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
 
   map.on("load", () => {
     for (const layer of manifest.layers) {
@@ -71,13 +78,18 @@ function showMap(manifest: DatasetManifest, sidePanel: Panel): void {
     }
     sidePanel.showLayers(manifest, (layer, visible) => setLayerVisibility(map, layer, visible));
     const roads = manifest.layers.find((layer) => layer.name === "roads");
-    void startLab(map, roads ? layerUrl(manifest.name, roads) : undefined, initialSettings);
+    void startLab(map, roads ? layerUrl(manifest.name, roads) : undefined, initialSettings, topBar);
   });
 
-  map.on("click", (event: MapMouseEvent) => sidePanel.showFeature(inspectAt(map, event)));
+  map.on("click", (event: MapMouseEvent) => inspected.show(inspectAt(map, event)));
 }
 
-async function startLab(map: MapLibreMap, roadsUrl: string | undefined, initialSettings: Settings): Promise<void> {
+async function startLab(
+  map: MapLibreMap,
+  roadsUrl: string | undefined,
+  initialSettings: Settings,
+  legend: TopBar,
+): Promise<void> {
   let settings = initialSettings;
   let lab: LabController | undefined;
   const labPanel = createLabPanel(requiredElement("panel"), {
@@ -103,7 +115,10 @@ async function startLab(map: MapLibreMap, roadsUrl: string | undefined, initialS
     lab?.update(settings, changedKey);
   };
   labPanel.render(settings);
-  lab = await createLab(map, roadsUrl, settings, BASE_LAYER_IDS, (info) => labPanel.showInfo(info));
+  lab = await createLab(map, roadsUrl, settings, BASE_LAYER_IDS, (info) => {
+    labPanel.showInfo(info);
+    legend.showTerritories(info.territories);
+  });
 }
 
 function startPosition(
