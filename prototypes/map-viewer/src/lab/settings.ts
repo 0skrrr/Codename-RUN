@@ -2,6 +2,7 @@ export const VIEW_MODES = ["flat", "extruded"] as const;
 export const TERRITORY_STYLES = ["fill", "outline", "fillOutline"] as const;
 export const TERRITORY_BORDERS = ["perHex", "merged"] as const;
 export const RUN_STYLES = ["line", "hexes", "both"] as const;
+export const SIMPLIFY_RULES = ["mostOfClaimed", "majorityOfArea"] as const;
 export const TRADE_STYLES = ["line", "hexChain", "both"] as const;
 export const TRADE_WIDTH_MODES = ["fixed", "bandwidth"] as const;
 export const TRADE_COLOR_MODES = ["fixed", "bandwidth"] as const;
@@ -27,6 +28,7 @@ export interface Settings {
   "territory.heightByPlayer": boolean;
   "simplify.enabled": boolean;
   "simplify.minHexPixels": number;
+  "simplify.rule": (typeof SIMPLIFY_RULES)[number];
   "simplify.minShare": number;
   "simplify.fadeByShare": boolean;
   "simplify.gridFollows": boolean;
@@ -93,6 +95,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   "territory.heightByPlayer": false,
   "simplify.enabled": true,
   "simplify.minHexPixels": 14,
+  "simplify.rule": "mostOfClaimed",
   "simplify.minShare": 0,
   "simplify.fadeByShare": true,
   "simplify.gridFollows": true,
@@ -167,6 +170,7 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
     controls: [
       { key: "simplify.enabled", kind: "toggle" },
       { key: "simplify.minHexPixels", kind: "range", min: 4, max: 60, step: 1, unit: "px" },
+      { key: "simplify.rule", kind: "choice", options: SIMPLIFY_RULES },
       { key: "simplify.minShare", kind: "range", min: 0, max: 0.9, step: 0.05 },
       { key: "simplify.fadeByShare", kind: "toggle" },
       { key: "simplify.gridFollows", kind: "toggle" },

@@ -1,8 +1,10 @@
 import {
   cellsToMultiPolygon,
   cellToBoundary,
+  cellToChildrenSize,
   cellToParent,
   getHexagonEdgeLengthAvg,
+  getResolution,
   getHexagonAreaAvg,
   gridDisk,
   gridPathCells,
@@ -72,13 +74,20 @@ export function fullyOwned(owners: ReadonlyMap<string, number>): Map<string, Own
   return new Map([...owners].map(([cell, playerId]) => [cell, { playerId, share: 1 }]));
 }
 
+export type AggregationRule = "mostOfClaimed" | "majorityOfArea";
+
+const AREA_MAJORITY = 0.5;
+
 export function aggregateOwnership(
   owners: ReadonlyMap<string, number>,
   resolution: number,
   minShare: number,
+  rule: AggregationRule = "mostOfClaimed",
 ): Map<string, OwnedCell> {
+  let childResolution = resolution;
   const countsByParent = new Map<string, Map<number, number>>();
   for (const [cell, playerId] of owners) {
+    childResolution = Math.max(childResolution, getResolution(cell));
     const parent = cellToParent(cell, resolution);
     const counts = countsByParent.get(parent) ?? new Map<number, number>();
     counts.set(playerId, (counts.get(playerId) ?? 0) + 1);
@@ -88,8 +97,14 @@ export function aggregateOwnership(
   const aggregated = new Map<string, OwnedCell>();
   for (const [parent, counts] of countsByParent) {
     const playerId = strongestPlayer(counts);
+    const owned = counts.get(playerId) ?? 0;
+    if (rule === "majorityOfArea") {
+      const share = owned / cellToChildrenSize(parent, childResolution);
+      if (share > AREA_MAJORITY) aggregated.set(parent, { playerId, share });
+      continue;
+    }
     const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
-    const share = (counts.get(playerId) ?? 0) / total;
+    const share = owned / total;
     if (share >= minShare) aggregated.set(parent, { playerId, share });
   }
   return aggregated;

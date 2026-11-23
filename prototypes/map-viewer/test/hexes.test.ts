@@ -98,6 +98,16 @@ describe("aggregateOwnership", () => {
     assert.ok(Math.abs((aggregated.get(parent)?.share ?? 0) - 30 / children.length) < 1e-9);
   });
 
+  it("with the majority rule, colours a hex only when one player owns over half its area", () => {
+    const over = new Map(children.slice(0, 26).map((cell) => [cell, 0]));
+    const exactlyHalfOrLess = new Map(children.slice(0, 24).map((cell) => [cell, 0]));
+
+    assert.equal(children.length, 49);
+    assert.equal(aggregateOwnership(over, coarse, 0, "majorityOfArea").get(parent)?.playerId, 0);
+    assert.equal(aggregateOwnership(exactlyHalfOrLess, coarse, 0, "majorityOfArea").size, 0);
+    assert.equal(aggregateOwnership(exactlyHalfOrLess, coarse, 0, "mostOfClaimed").size, 1);
+  });
+
   it("leaves a coarse hex empty when nobody dominates enough", () => {
     const owners = new Map(children.map((cell, index) => [cell, index % 2]));
 

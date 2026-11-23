@@ -111,5 +111,8 @@
   "lab.control.simplify.minShare": "Minimum dominance to colour",
   "lab.control.simplify.fadeByShare": "Fade contested areas",
   "lab.control.simplify.gridFollows": "Grid uses simplified size",
-  "lab.info.simplified": "Simplified view: resolution {resolution} (edge ≈ {edge} m)"
+  "lab.info.simplified": "Simplified view: resolution {resolution} (edge ≈ {edge} m)",
+  "lab.control.simplify.rule": "Who gets a big hex",
+  "lab.option.mostOfClaimed": "Most of the claimed land",
+  "lab.option.majorityOfArea": "Over 50% of the whole hex"
 }

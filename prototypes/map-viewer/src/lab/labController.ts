@@ -101,7 +101,7 @@ export async function createLab(
     territoryResolution = currentDisplayResolution();
     const owned =
       territoryResolution < settings["hexGrid.resolution"]
-        ? aggregateOwnership(baseOwners, territoryResolution, settings["simplify.minShare"])
+        ? aggregateOwnership(baseOwners, territoryResolution, settings["simplify.minShare"], settings["simplify.rule"])
         : fullyOwned(baseOwners);
     setLabData(map, LAB_SOURCES.territory, territoryFeatures(owned, scenario.players));
   };

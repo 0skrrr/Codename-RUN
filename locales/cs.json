@@ -111,5 +111,8 @@
   "lab.control.simplify.minShare": "Min. převaha pro obarvení",
   "lab.control.simplify.fadeByShare": "Zesvětlit sporná území",
   "lab.control.simplify.gridFollows": "Mřížka podle zjednodušení",
-  "lab.info.simplified": "Zjednodušený pohled: rozlišení {resolution} (hrana ≈ {edge} m)"
+  "lab.info.simplified": "Zjednodušený pohled: rozlišení {resolution} (hrana ≈ {edge} m)",
+  "lab.control.simplify.rule": "Kdo získá velký hex",
+  "lab.option.mostOfClaimed": "Většina zabraného území",
+  "lab.option.majorityOfArea": "Přes 50 % celého hexu"
 }
