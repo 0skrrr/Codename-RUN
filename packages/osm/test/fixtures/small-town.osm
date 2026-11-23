@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand-written test fixture">
+  <node id="1" lat="49.2200" lon="17.6600"/>
+  <node id="2" lat="49.2200" lon="17.6700"/>
+  <node id="3" lat="49.2300" lon="17.6700"/>
+  <node id="4" lat="49.2300" lon="17.6600"/>
+  <node id="5" lat="49.2240" lon="17.6640"/>
+  <node id="6" lat="49.2240" lon="17.6660"/>
+  <node id="7" lat="49.2260" lon="17.6660"/>
+  <node id="8" lat="49.2260" lon="17.6640"/>
+  <node id="10" lat="49.2210" lon="17.6610"/>
+  <node id="11" lat="49.2210" lon="17.6620"/>
+  <node id="12" lat="49.2220" lon="17.6620"/>
+  <node id="13" lat="49.2220" lon="17.6610"/>
+  <node id="20" lat="49.2250" lon="17.6550"/>
+  <node id="21" lat="49.2250" lon="17.6750"/>
+  <node id="22" lat="49.2280" lon="17.6800">
+    <tag k="place" v="village"/>
+  </node>
+  <way id="100">
+    <nd ref="20"/>
+    <nd ref="21"/>
+    <tag k="highway" v="primary"/>
+    <tag k="name" v="třída Tomáše Bati"/>
+  </way>
+  <way id="101">
+    <nd ref="10"/>
+    <nd ref="11"/>
+    <nd ref="12"/>
+    <nd ref="13"/>
+    <nd ref="10"/>
+    <tag k="building" v="yes"/>
+  </way>
+  <way id="102">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <nd ref="3"/>
+  </way>
+  <way id="103">
+    <nd ref="1"/>
+    <nd ref="4"/>
+    <nd ref="3"/>
+  </way>
+  <way id="104">
+    <nd ref="5"/>
+    <nd ref="6"/>
+    <nd ref="7"/>
+    <nd ref="8"/>
+    <nd ref="5"/>
+  </way>
+  <way id="105">
+    <nd ref="10"/>
+    <nd ref="11"/>
+    <nd ref="12"/>
+    <nd ref="10"/>
+    <tag k="highway" v="residential"/>
+    <tag k="junction" v="roundabout"/>
+  </way>
+  <way id="106">
+    <nd ref="20"/>
+    <nd ref="999"/>
+    <tag k="highway" v="service"/>
+  </way>
+  <relation id="200">
+    <member type="way" ref="102" role="outer"/>
+    <member type="way" ref="103" role="outer"/>
+    <member type="way" ref="104" role="inner"/>
+    <tag k="type" v="multipolygon"/>
+    <tag k="landuse" v="forest"/>
+    <tag k="name" v="Lesopark Štípa"/>
+  </relation>
+  <relation id="300">
+    <member type="way" ref="102" role="outer"/>
+    <member type="node" ref="22" role="admin_centre"/>
+    <tag k="type" v="boundary"/>
+    <tag k="boundary" v="administrative"/>
+    <tag k="admin_level" v="8"/>
+    <tag k="name" v="Zlín"/>
+  </relation>
+</osm>
