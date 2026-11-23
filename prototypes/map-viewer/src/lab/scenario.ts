@@ -45,6 +45,16 @@ export const PLAYER_COLORS = [
   "#ff006e",
 ] as const;
 
+const GOLDEN_ANGLE_DEGREES = 137.508;
+const GENERATED_SATURATION = 65;
+const GENERATED_LIGHTNESS = 50;
+
+export function playerColor(index: number): string {
+  const fixed = PLAYER_COLORS[index];
+  if (fixed) return fixed;
+  return `hsl(${((index * GOLDEN_ANGLE_DEGREES) % 360).toFixed(1)}, ${GENERATED_SATURATION}%, ${GENERATED_LIGHTNESS}%)`;
+}
+
 const MIN_BANDWIDTH_EXPONENT = 1;
 const BANDWIDTH_EXPONENT_RANGE = 2;
 const MIN_HEIGHT_FACTOR = 0.4;
@@ -59,7 +69,7 @@ export function generateScenario(graph: RoadGraph, options: ScenarioOptions): Sc
   for (let id = 0; id < options.players; id++) {
     players.push({
       id,
-      color: PLAYER_COLORS[id % PLAYER_COLORS.length] as string,
+      color: playerColor(id),
       heightFactor: MIN_HEIGHT_FACTOR + random() * HEIGHT_FACTOR_RANGE,
     });
     const home = pickStartVertex(graph, random);

@@ -68,7 +68,10 @@ The viewer's **Hex lab** panel is for deciding how the game should look. Every v
 | Zoomed-out view | Simplify into bigger hexes when zoomed out, smallest hex size on screen, minimum dominance to colour a hex, fade contested areas, grid follows the simplified size |
 | Runs | Line / hexes it crossed / both, width, opacity, dashed |
 | Trade routes | Line / chain of hexes / both, width fixed or by bandwidth, colour fixed or low→high bandwidth gradient, height in 2.5D, moving resource packets with speed and size |
-| Demo scenario | Random seed, players, runs per player, run length, number of trade routes, "generate around current view" |
+| Demo scenario | Random seed, up to 200 players, runs per player, run length, number of trade routes, play area radius, % of the map filled by territories, "generate around current view" |
+
+### Crowded maps
+*Map filled by territories* grows every player's territory outward from their runs, one ring at a time and all players at the same pace, until that share of the *play area* (a circle around the scenario centre) is claimed. That gives neighbourhood-like areas and a full map without thousands of fake runs. For tiny hex sizes the growth runs on a coarser grid (at most 150,000 hexes) and is then split back down. Beyond the 8 hand-picked player colours, extra players get evenly spread hues.
 
 ### Zoomed-out simplification
 Zoomed out, the real-size hexes would be specks. With *Simplify when zoomed out* on, the lab switches to coarser H3 hexes whenever hexes would be smaller than the chosen number of pixels on screen. Every H3 hex has one parent about 7× bigger, so each big hex gathers the small hexes inside it and takes the colour of the player who owns the most of them. Details like exact borders disappear on purpose.

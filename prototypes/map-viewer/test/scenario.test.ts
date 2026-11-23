@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { cumulativeDistances, distanceMeters, pointAlongPath, type LngLat } from "../src/lab/geo.ts";
 import { seededRandom } from "../src/lab/random.ts";
 import { buildRoadGraph, randomWalk } from "../src/lab/roadGraph.ts";
-import { generateScenario } from "../src/lab/scenario.ts";
+import { generateScenario, playerColor } from "../src/lab/scenario.ts";
 
 const CENTER: LngLat = [17.6667, 49.2265];
 const STEP = 0.001;
@@ -78,5 +78,13 @@ describe("generateScenario", () => {
       assert.ok(route.bandwidth >= 10 && route.bandwidth <= 1_000);
       assert.ok(route.bandwidthShare >= 0 && route.bandwidthShare <= 1);
     }
+  });
+});
+
+describe("playerColor", () => {
+  it("gives 200 players 200 different colours", () => {
+    const colours = Array.from({ length: 200 }, (_, index) => playerColor(index));
+
+    assert.equal(new Set(colours).size, 200);
   });
 });

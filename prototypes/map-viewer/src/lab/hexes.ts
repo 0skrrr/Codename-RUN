@@ -24,6 +24,9 @@ export interface OwnedCell {
 const EARTH_CIRCUMFERENCE_METERS = 40_075_016.686;
 const MAPLIBRE_TILE_PIXELS = 512;
 const COARSEST_RESOLUTION = 0;
+const MAX_FILL_CELLS = 150_000;
+const CIRCLE_SEGMENTS = 64;
+const METERS_PER_DEGREE_LATITUDE = 111_320;
 
 const PATH_CELL_WEIGHT = 3;
 const GROWTH_CELL_WEIGHT = 1;
@@ -85,12 +88,13 @@ export function aggregateOwnership(
   rule: AggregationRule = "mostOfClaimed",
 ): Map<string, OwnedCell> {
   let childResolution = resolution;
+  for (const cell of owners.keys()) childResolution = Math.max(childResolution, getResolution(cell));
   const countsByParent = new Map<string, Map<number, number>>();
   for (const [cell, playerId] of owners) {
-    childResolution = Math.max(childResolution, getResolution(cell));
-    const parent = cellToParent(cell, resolution);
+    const parent = getResolution(cell) > resolution ? cellToParent(cell, resolution) : cell;
+    const weight = cellToChildrenSize(cell, childResolution);
     const counts = countsByParent.get(parent) ?? new Map<number, number>();
-    counts.set(playerId, (counts.get(playerId) ?? 0) + 1);
+    counts.set(playerId, (counts.get(playerId) ?? 0) + weight);
     countsByParent.set(parent, counts);
   }
 
@@ -229,4 +233,65 @@ function cellFeature(cell: string, properties: Record<string, string | number>):
     geometry: { type: "Polygon", coordinates: [cellToBoundary(cell, true) as LngLat[]] },
     properties,
   };
+}
+
+export function playAreaCells(center: LngLat, radiusMeters: number, resolution: number): string[] {
+  const [longitude, latitude] = center;
+  const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(latitude * DEGREES_TO_RADIANS);
+  const ring: LngLat[] = [];
+  for (let step = 0; step <= CIRCLE_SEGMENTS; step++) {
+    const angle = (2 * Math.PI * step) / CIRCLE_SEGMENTS;
+    ring.push([
+      longitude + (radiusMeters * Math.cos(angle)) / metersPerDegreeLongitude,
+      latitude + (radiusMeters * Math.sin(angle)) / METERS_PER_DEGREE_LATITUDE,
+    ]);
+  }
+  return polygonToCells([ring], resolution, true);
+}
+
+export function fillTerritory(
+  owners: ReadonlyMap<string, number>,
+  center: LngLat,
+  radiusMeters: number,
+  fillFraction: number,
+  baseResolution: number,
+): Map<string, number> {
+  if (fillFraction <= 0 || owners.size === 0) return new Map(owners);
+  const resolution = fillResolution(radiusMeters, baseResolution);
+  const area = new Set(playAreaCells(center, radiusMeters, resolution));
+  const target = Math.min(area.size, Math.ceil(area.size * fillFraction));
+
+  const claimed = new Map<string, number>();
+  for (const [cell, playerId] of owners) {
+    const coarse = cellToParent(cell, resolution);
+    if (area.has(coarse) && !claimed.has(coarse)) claimed.set(coarse, playerId);
+  }
+  const seeds = new Set(claimed.keys());
+
+  let frontier = [...claimed.entries()];
+  while (claimed.size < target && frontier.length > 0) {
+    const next: [string, number][] = [];
+    for (const [cell, playerId] of frontier) {
+      for (const neighbour of gridDisk(cell, 1)) {
+        if (claimed.size >= target) break;
+        if (!area.has(neighbour) || claimed.has(neighbour)) continue;
+        claimed.set(neighbour, playerId);
+        next.push([neighbour, playerId]);
+      }
+    }
+    frontier = next;
+  }
+
+  const filled = new Map(owners);
+  for (const [cell, playerId] of claimed) if (!seeds.has(cell)) filled.set(cell, playerId);
+  return filled;
+}
+
+function fillResolution(radiusMeters: number, baseResolution: number): number {
+  const areaKm2 = Math.PI * (radiusMeters / 1000) ** 2;
+  let resolution = baseResolution;
+  while (resolution > COARSEST_RESOLUTION && areaKm2 / getHexagonAreaAvg(resolution, "km2") > MAX_FILL_CELLS) {
+    resolution--;
+  }
+  return resolution;
 }

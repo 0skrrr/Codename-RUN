@@ -55,6 +55,8 @@ export interface Settings {
   "scenario.runsPerPlayer": number;
   "scenario.runLengthKm": number;
   "scenario.tradeRoutes": number;
+  "scenario.areaKm": number;
+  "scenario.fillPercent": number;
   "scenario.centerLongitude": number;
   "scenario.centerLatitude": number;
 }
@@ -122,6 +124,8 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   "scenario.runsPerPlayer": 4,
   "scenario.runLengthKm": 5,
   "scenario.tradeRoutes": 3,
+  "scenario.areaKm": 3,
+  "scenario.fillPercent": 0,
   "scenario.centerLongitude": ZLIN_CITY_CENTER.longitude,
   "scenario.centerLatitude": ZLIN_CITY_CENTER.latitude,
 };
@@ -208,10 +212,12 @@ export const CONTROL_GROUPS: readonly ControlGroup[] = [
     id: "scenario",
     controls: [
       { key: "scenario.seed", kind: "range", min: 1, max: 999, step: 1 },
-      { key: "scenario.players", kind: "range", min: 1, max: 8, step: 1 },
+      { key: "scenario.players", kind: "range", min: 1, max: 200, step: 1 },
       { key: "scenario.runsPerPlayer", kind: "range", min: 1, max: 12, step: 1 },
       { key: "scenario.runLengthKm", kind: "range", min: 1, max: 20, step: 0.5, unit: "km" },
       { key: "scenario.tradeRoutes", kind: "range", min: 0, max: 12, step: 1 },
+      { key: "scenario.areaKm", kind: "range", min: 0.5, max: 6, step: 0.5, unit: "km" },
+      { key: "scenario.fillPercent", kind: "range", min: 0, max: 100, step: 5, unit: "%" },
     ],
   },
 ];

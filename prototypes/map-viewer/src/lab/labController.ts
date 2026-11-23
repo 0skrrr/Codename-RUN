@@ -4,6 +4,7 @@ import { cumulativeDistances, featureCollection, pointAlongPath, type LabFeature
 import {
   aggregateOwnership,
   displayResolution,
+  fillTerritory,
   fullyOwned,
   gridFeatures,
   runFeatures,
@@ -35,9 +36,9 @@ export interface LabController {
   mapCenter(): LngLat;
 }
 
-const GRAPH_RADIUS_METERS = 6_000;
 const MAX_GRID_CELLS = 25_000;
 const METERS_PER_KILOMETER = 1_000;
+const PERCENT = 100;
 const SQUARE_METERS_PER_SQUARE_KILOMETER = 1_000_000;
 const PACKET_METERS_PER_SECOND = 120;
 const MILLISECONDS_PER_SECOND = 1_000;
@@ -76,9 +77,9 @@ export async function createLab(
   const center = (): LngLat => [settings["scenario.centerLongitude"], settings["scenario.centerLatitude"]];
 
   const rebuildScenario = (): void => {
-    const key = center().join(",");
+    const key = `${center().join(",")}:${settings["scenario.areaKm"]}`;
     if (!graph || key !== graphCenterKey) {
-      graph = buildRoadGraph(roadLines, center(), GRAPH_RADIUS_METERS);
+      graph = buildRoadGraph(roadLines, center(), settings["scenario.areaKm"] * METERS_PER_KILOMETER);
       graphCenterKey = key;
     }
     scenario = generateScenario(graph, {
@@ -108,7 +109,13 @@ export async function createLab(
 
   const rebuildHexData = (): void => {
     const resolution = settings["hexGrid.resolution"];
-    baseOwners = territoryOwnership(scenario.runs, resolution, settings["territory.growth"]);
+    baseOwners = fillTerritory(
+      territoryOwnership(scenario.runs, resolution, settings["territory.growth"]),
+      center(),
+      settings["scenario.areaKm"] * METERS_PER_KILOMETER,
+      settings["scenario.fillPercent"] / PERCENT,
+      resolution,
+    );
     territoryHexes = baseOwners.size;
     rebuildTerritory();
     const runs = runFeatures(scenario.runs, scenario.players, resolution);

@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { areNeighborCells, cellToChildren, cellToLatLng, gridDisk, latLngToCell } from "h3-js";
+import { areNeighborCells, cellToChildren, cellToLatLng, cellToParent, gridDisk, latLngToCell } from "h3-js";
 import type { LngLat } from "../src/lab/geo.ts";
 import {
   aggregateOwnership,
   displayResolution,
+  fillTerritory,
+  playAreaCells,
   estimatedCellCount,
   gridFeatures,
   pathCells,
@@ -130,5 +132,60 @@ describe("displayResolution", () => {
 
   it("never returns a size finer than the chosen one", () => {
     assert.equal(displayResolution(8, 19, 49.2, 4), 8);
+  });
+});
+
+describe("fillTerritory", () => {
+  const center: LngLat = [17.67, 49.22];
+  const radius = 1_000;
+  const resolution = 10;
+  const area = playAreaCells(center, radius, resolution);
+  const seeds = new Map([
+    [latLngToCell(49.22, 17.665, resolution), 0],
+    [latLngToCell(49.22, 17.675, resolution), 1],
+  ]);
+
+  it("grows territories until the requested share of the play area is claimed", () => {
+    const filled = fillTerritory(seeds, center, radius, 0.5, resolution);
+    const claimedInArea = area.filter((cell) => filled.has(cell)).length;
+
+    assert.ok(claimedInArea >= area.length * 0.5);
+    assert.ok(claimedInArea <= area.length * 0.5 + 1);
+  });
+
+  it("splits the grown land between the players", () => {
+    const filled = fillTerritory(seeds, center, radius, 1, resolution);
+    const owners = [...filled.values()];
+
+    assert.equal(filled.size, area.length);
+    assert.ok(owners.filter((id) => id === 0).length > area.length / 4);
+    assert.ok(owners.filter((id) => id === 1).length > area.length / 4);
+  });
+
+  it("changes nothing at 0%", () => {
+    assert.deepEqual(fillTerritory(seeds, center, radius, 0, resolution), seeds);
+  });
+});
+
+describe("fillTerritory with tiny hexes", () => {
+  it("keeps grown land on a coarser grid instead of creating hundreds of thousands of hexes", () => {
+    const center: LngLat = [17.67, 49.22];
+    const seed = new Map([[latLngToCell(49.22, 17.67, 13), 0]]);
+    const filled = fillTerritory(seed, center, 3_000, 1, 13);
+
+    assert.ok(filled.size < 200_000);
+    assert.ok(filled.size > 1_000);
+  });
+
+  it("counts coarse hexes by their area when simplifying", () => {
+    const fine = latLngToCell(49.22, 17.67, 11);
+    const coarseNeighbourParent = cellToParent(fine, 10);
+    const owners = new Map([
+      [fine, 0],
+      [coarseNeighbourParent, 1],
+    ]);
+    const aggregated = aggregateOwnership(owners, 9, 0);
+
+    assert.equal([...aggregated.values()][0]?.playerId, 1);
   });
 });

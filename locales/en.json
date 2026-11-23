@@ -114,5 +114,7 @@
   "lab.info.simplified": "Simplified view: resolution {resolution} (edge ≈ {edge} m)",
   "lab.control.simplify.rule": "Who gets a big hex",
   "lab.option.mostOfClaimed": "Most of the claimed land",
-  "lab.option.majorityOfArea": "Over 50% of the whole hex"
+  "lab.option.majorityOfArea": "Over 50% of the whole hex",
+  "lab.control.scenario.areaKm": "Play area radius",
+  "lab.control.scenario.fillPercent": "Map filled by territories"
 }
