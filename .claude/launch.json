@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "map-viewer",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["map:dev", "--port", "5173", "--strictPort"],
+      "port": 5173
+    }
+  ]
+}
